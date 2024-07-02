@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import * as pathlib from 'path';
 import { BitError } from '@teambit/bit-error';
 import { getSync } from '@teambit/legacy/dist/api/consumer/lib/global-config';
-import { initScope } from '@teambit/legacy/dist/api/scope';
+import { initScope } from '@teambit/legacy.scope-api';
 import { CFG_INIT_DEFAULT_SCOPE, CFG_INIT_DEFAULT_DIRECTORY } from '@teambit/legacy/dist/constants';
 import { WorkspaceExtensionProps } from '@teambit/config';
 import { Command, CommandOptions } from '@teambit/cli';
@@ -20,6 +20,11 @@ export class InitCmd implements Command {
   loadAspects = false;
   options = [
     ['n', 'name <workspace-name>', 'name of the workspace'],
+    [
+      '',
+      'generator <env-id>',
+      'add env-id into the generators field in the workspace config for future "bit create" templates',
+    ],
     [
       'T',
       'standalone',
@@ -59,6 +64,7 @@ export class InitCmd implements Command {
   async report([path]: [string], flags: Record<string, any>) {
     const {
       name,
+      generator,
       bare,
       shared,
       standalone,
@@ -98,7 +104,8 @@ export class InitCmd implements Command {
       resetHard,
       resetScope,
       force,
-      workspaceExtensionProps
+      workspaceExtensionProps,
+      generator
     );
 
     let initMessage = `${chalk.green('successfully initialized a bit workspace.')}`;

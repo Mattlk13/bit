@@ -461,6 +461,10 @@ this command marks the components as deleted, and after snap/tag and export they
 
 `bit dependents <component-name>`
 
+| **Arg**          |        **Description**         |
+| ---------------- | :----------------------------: |
+| `component-name` | component name or component id |
+
 ---
 
 ## deprecate
@@ -949,6 +953,7 @@ if the current directory is already a workspace, it validates that bit files are
 | **Option**                                | **Option alias** | **Description**                                                                                                                           |
 | ----------------------------------------- | :--------------: | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `--name <workspace-name>`                 |       `-n`       | name of the workspace                                                                                                                     |
+| `--generator <env-id>`                    |                  | add env-id into the generators field in the workspace config for future "bit create" templates                                            |
 | `--standalone`                            |       `-T`       | do not nest component store within .git directory and do not write config data inside package.json                                        |
 | `--no-package-json`                       |                  | do not generate package.json                                                                                                              |
 | `--reset`                                 |       `-r`       | write missing or damaged Bit files                                                                                                        |
@@ -1415,10 +1420,13 @@ this command does the following:
 merge changes of the remote head into local when they are diverged. when on a lane, merge the remote head of the lane into the local  
 and creates snaps for merged components that have diverged, on the lane.  
 if no ids are specified, all pending-merge components will be merged. (run "bit status" to list them).  
-optionally use '--abort' to revert the last merge. to revert a lane merge, use "bit lane merge-abort" command.  
-you can use a pattern for multiple ids, such as bit merge "utils/\*". (wrap the pattern with quotes to avoid collision with shell commands)
+optionally use '--abort' to revert the last merge. to revert a lane merge, use "bit lane merge-abort" command.
 
-`bit merge [ids...]`
+`bit merge [component-pattern]`
+
+| **Arg**             |                                                                                                                                                                                                                 **Description**                                                                                                                                                                                                                 |
+| ------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| `component-pattern` | component name, component id, or component pattern. use component pattern to select multiple components. wrap the pattern with quotes. use comma to separate patterns and "!" to exclude. e.g. "ui/\*\*, !ui/button". use '$' prefix to filter by states/attributes, e.g. '$deprecated', '$modified' or '$env:teambit.react/react'. use `bit pattern --help` to understand patterns better and `bit pattern <pattern>` to validate the pattern. |
 
 | **Option**                              | **Option alias** | **Description**                                                                                                         |
 | --------------------------------------- | :--------------: | ----------------------------------------------------------------------------------------------------------------------- |
@@ -1802,38 +1810,6 @@ optionally, provide [pattern] to limit the fork to specific components
 | -------------------------------- | :--------------: | --------------------------------------------------------- |
 | `--ast`                          |                  | EXPERIMENTAL. use ast to transform files instead of regex |
 | `--skip-dependency-installation` |       `-x`       | do not install packages of the imported components        |
-
----
-
-## scope-config
-
-**Description**: scope config management
-
-`bit scope-config`
-
-### scope-config set
-
-**Usage**: `scope-config set <key> <val>`
-
-**Description**: set a scope configuration
-
-### scope-config del
-
-**Usage**: `scope-config del <key>`
-
-**Description**: delete given key from global configuration
-
-### scope-config get
-
-**Usage**: `scope-config get <key>`
-
-**Description**: get a scope configuration
-
-### scope-config list
-
-**Usage**: `scope-config list`
-
-**Description**: list all scope configuration(s)
 
 ---
 
@@ -2248,7 +2224,8 @@ if this doesn't work well for you, run "bit config set watch_use_polling true" t
 | `--verbose`              |       `-v`       | show all watch events and compiler verbose output                                                                                                 |
 | `--skip-pre-compilation` |                  | skip compilation step before starting to watch                                                                                                    |
 | `--check-types [string]` |       `-t`       | EXPERIMENTAL. show errors/warnings for types. options are [file, project] to investigate only changed file or entire project. defaults to project |
-| `--import`               |       `-i`       | helpful when using git. import component objects if .bitmap changed not by bit                                                                    |
+| `--import`               |       `-i`       | DEPRECATED. it is now the default. helpful when using git. import component objects if .bitmap changed not by bit                                 |
+| `--skip-import`          |                  | do not import component objects if .bitmap changed not by bit                                                                                     |
 
 ---
 

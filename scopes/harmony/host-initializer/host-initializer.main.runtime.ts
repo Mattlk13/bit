@@ -5,8 +5,8 @@ import { Scope } from '@teambit/legacy/dist/scope';
 import { Repository } from '@teambit/legacy/dist/scope/objects';
 import { isDirEmpty } from '@teambit/legacy/dist/utils';
 import { WorkspaceExtensionProps } from '@teambit/config';
-import ObjectsWithoutConsumer from '@teambit/legacy/dist/api/consumer/lib/exceptions/objects-without-consumer';
 import { CLIAspect, CLIMain, MainRuntime } from '@teambit/cli';
+import { ObjectsWithoutConsumer } from './objects-without-consumer';
 import { HostInitializerAspect } from './host-initializer.aspect';
 import { InitCmd } from './init-cmd';
 import { createConsumer, resetConsumer } from './create-consumer';
@@ -22,7 +22,8 @@ export class HostInitializerMain {
     resetHard = false,
     resetScope = false,
     force = false,
-    workspaceConfigProps: WorkspaceExtensionProps = {}
+    workspaceConfigProps: WorkspaceExtensionProps = {},
+    generator?: string
   ): Promise<Consumer> {
     const consumerInfo = await getConsumerInfo(absPath || process.cwd());
     // if "bit init" was running without any flags, the user is probably trying to init a new workspace but wasn't aware
@@ -48,7 +49,7 @@ export class HostInitializerMain {
     }
     let consumer: Consumer | undefined;
     try {
-      consumer = await createConsumer(consumerPath, noGit, noPackageJson, workspaceConfigProps);
+      consumer = await createConsumer(consumerPath, noGit, noPackageJson, workspaceConfigProps, generator);
     } catch (err) {
       // it's possible that at this stage the consumer fails to load due to scope issues.
       // still we want to load it to include its instance of "scope.json", so then later when "consumer.write()", we

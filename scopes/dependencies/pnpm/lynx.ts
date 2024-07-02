@@ -154,6 +154,7 @@ export async function getPeerDependencyIssues(
     storeDir: storeController.dir,
     overrides: opts.overrides,
     workspacePackages,
+    peersSuffixMaxLength: 1000,
     registries: registriesMap,
     virtualStoreDirMaxLength: VIRTUAL_STORE_DIR_MAX_LENGTH,
   });
@@ -274,6 +275,7 @@ export async function install(
     hooks: { readPackage },
     externalDependencies,
     strictPeerDependencies: false,
+    peersSuffixMaxLength: 1000,
     resolveSymlinksInInjectedDirs: true,
     resolvePeersFromWorkspaceRoot: true,
     dedupeDirectDeps: true,
@@ -616,18 +618,6 @@ function getAuthTokenForRegistry(registry: Registry, isDefault = false): { keyNa
       {
         keyName: isDefault ? '_auth' : `${nerfed}:_auth`,
         val: registry.originalAuthValue || '',
-      },
-    ];
-  }
-  if (registry.originalAuthType === 'user-pass') {
-    return [
-      {
-        keyName: `${nerfed}:username`,
-        val: registry.originalAuthValue?.split(':')[0] || '',
-      },
-      {
-        keyName: `${nerfed}:_password`,
-        val: registry.originalAuthValue?.split(':')[1] || '',
       },
     ];
   }

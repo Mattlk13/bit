@@ -2,8 +2,7 @@ import mapSeries from 'p-map-series';
 import { ComponentID, ComponentIdList } from '@teambit/component-id';
 import * as path from 'path';
 import { ComponentIssue } from '@teambit/component-issues';
-import { createInMemoryCache } from '../../cache/cache-factory';
-import { getMaxSizeForComponents, InMemoryCache } from '../../cache/in-memory-cache';
+import { getMaxSizeForComponents, InMemoryCache, createInMemoryCache } from '@teambit/harmony.modules.in-memory-cache';
 import { BIT_MAP } from '../../constants';
 import logger from '../../logger/logger';
 import { ModelComponent } from '../../scope/models';
@@ -90,6 +89,8 @@ export default class ComponentLoader {
       const pathsToCheck = [
         path.join(this.consumer.getPath(), 'node_modules'),
         path.join(this.consumer.getPath(), 'package.json'),
+        path.join(this.consumer.getPath(), 'pnpm-lock.yaml'),
+        path.join(this.consumer.getPath(), 'yarn.lock'),
         path.join(this.consumer.getPath(), BIT_MAP),
         this.consumer.config.path,
       ];
@@ -281,10 +282,10 @@ export default class ComponentLoader {
    * this function returns true only if the dependencies cache has all the components. or when only one component is missing.
    */
   private async shouldRunInParallel(ids: ComponentID[]): Promise<boolean> {
+    await this.invalidateDependenciesCacheIfNeeded();
     if (ids.length < 2) {
       return false;
     }
-    await this.invalidateDependenciesCacheIfNeeded();
     const dependenciesCacheList = await this.componentFsCache.listDependenciesDataCache();
     const depsInCache = Object.keys(dependenciesCacheList);
     if (!depsInCache.length) {

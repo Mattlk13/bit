@@ -36,8 +36,7 @@ import { InvalidScopeName, InvalidScopeNameFromRemote, isValidScopeName, BitId }
 import { LaneId } from '@teambit/lane-id';
 import { Consumer, loadConsumer } from '@teambit/legacy/dist/consumer';
 import { GetBitMapComponentOptions } from '@teambit/legacy/dist/consumer/bit-map/bit-map';
-import { getMaxSizeForComponents, InMemoryCache } from '@teambit/legacy/dist/cache/in-memory-cache';
-import { createInMemoryCache } from '@teambit/legacy/dist/cache/cache-factory';
+import { getMaxSizeForComponents, InMemoryCache, createInMemoryCache } from '@teambit/harmony.modules.in-memory-cache';
 import ComponentsList from '@teambit/legacy/dist/consumer/component/components-list';
 import { ExtensionDataList, ExtensionDataEntry } from '@teambit/legacy/dist/consumer/config/extension-data';
 import { pathIsInside } from '@teambit/legacy/dist/utils';
@@ -64,7 +63,7 @@ import ScopeComponentsImporter from '@teambit/legacy/dist/scope/component-ops/sc
 import { MissingBitMapComponent } from '@teambit/legacy/dist/consumer/bit-map/exceptions';
 import loader from '@teambit/legacy/dist/cli/loader';
 import { Lane } from '@teambit/legacy/dist/scope/models';
-import { LaneNotFound } from '@teambit/legacy/dist/api/scope/lib/exceptions/lane-not-found';
+import { LaneNotFound } from '@teambit/legacy.scope-api';
 import { ScopeNotFoundOrDenied } from '@teambit/legacy/dist/remotes/exceptions/scope-not-found-or-denied';
 import { isHash } from '@teambit/component-version';
 import { GlobalConfigMain } from '@teambit/global-config';
@@ -139,6 +138,13 @@ export interface EjectConfOptions {
 
 export type ComponentExtensionsOpts = {
   loadExtensions?: boolean;
+};
+
+type ComponentExtensionsResponse = {
+  extensions: ExtensionDataList;
+  beforeMerge: Array<{ extensions: ExtensionDataList; origin: ExtensionsOrigin; extraData: any }>; // useful for debugging
+  errors?: Error[];
+  envId?: string;
 };
 
 export type ExtensionsOrigin =
@@ -741,17 +747,23 @@ it's possible that the version ${component.id.version} belong to ${idStr.split('
     return workspaceAspectsLoader.getConfiguredUserAspectsPackages(options);
   }
 
+  /**
+   * clears workspace, scope and all components caches.
+   * doesn't clear the dependencies-data from the filesystem-cache.
+   */
   async clearCache(options: ClearCacheOptions = {}) {
+    this.logger.debug('clearing the workspace and scope caches');
     this.aspectLoader.resetFailedLoadAspects();
     if (!options.skipClearFailedToLoadEnvs) this.envs.resetFailedToLoadEnvs();
-    this.logger.debug('clearing the workspace and scope caches');
-    this.componentLoader.clearCache();
-    this.componentStatusLoader.clearCache();
     await this.scope.clearCache();
-    this.componentList = new ComponentsList(this.consumer);
     this.componentDefaultScopeFromComponentDirAndNameWithoutConfigFileMemoized.clear();
+    this.clearAllComponentsCache();
   }
 
+  /**
+   * clear the cache of all components in the workspace.
+   * doesn't clear the dependencies-data from the filesystem-cache.
+   */
   clearAllComponentsCache() {
     this.logger.debug('clearing all components caches');
     this.componentLoader.clearCache();
@@ -1283,20 +1295,21 @@ the following envs are used in this workspace: ${availableEnvs.join(', ')}`);
     componentFromScope?: Component,
     excludeOrigins: ExtensionsOrigin[] = [],
     opts: ComponentExtensionsOpts = {}
-  ): Promise<{
-    extensions: ExtensionDataList;
-    beforeMerge: Array<{ extensions: ExtensionDataList; origin: ExtensionsOrigin; extraData: any }>; // useful for debugging
-    errors?: Error[];
-  }> {
+  ): Promise<ComponentExtensionsResponse> {
     const optsWithDefaults: ComponentExtensionsOpts = Object.assign({ loadExtensions: true }, opts);
-    const mergeRes = await this.aspectsMerger.merge(componentId, componentFromScope, excludeOrigins);
+    const mergeRes: ComponentExtensionsResponse = await this.aspectsMerger.merge(
+      componentId,
+      componentFromScope,
+      excludeOrigins
+    );
+    const envId = await this.envs.getEnvIdFromEnvsLegacyExtensions(mergeRes.extensions);
     if (optsWithDefaults.loadExtensions) {
       await this.loadComponentsExtensions(mergeRes.extensions, componentId);
-      const envId = await this.envs.getEnvIdFromEnvsLegacyExtensions(mergeRes.extensions);
       if (envId) {
         await this.warnAboutMisconfiguredEnv(envId);
       }
     }
+    mergeRes.envId = envId;
     return mergeRes;
   }
 
