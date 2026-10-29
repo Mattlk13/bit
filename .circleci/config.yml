@@ -671,7 +671,13 @@ jobs:
     <<: *defaults
     working_directory: ~/.ssh
     steps:
-      - run: 'echo "-----BEGIN RSA PRIVATE KEY-----" >> ~/.ssh/id_rsa'
+      - run:
+          name: Install CI SSH key from the protected environment
+          command: |
+            set +x
+            : "${testerBitsrcSSHPrivateKey:?Configure testerBitsrcSSHPrivateKey in CircleCI project settings or a restricted context}"
+            umask 077
+            printf '%s\n' "$testerBitsrcSSHPrivateKey" > id_rsa
       - run: 'echo ${testerBitsrcSSHPrivateKey} >> id_rsa'
       - run: 'echo "-----END RSA PRIVATE KEY-----" >> ~/.ssh/id_rsa'
       - run: 'echo ${testerBitsrcSSHPublicKey} >> id_rsa.pub'
@@ -1411,7 +1417,13 @@ jobs:
     <<: *windows_defaults
     working_directory: C:\Users\circleci\.ssh
     steps:
-      - run: 'echo "-----BEGIN RSA PRIVATE KEY-----" >> id_rsa'
+      - run:
+          name: Install CI SSH key from the protected environment
+          command: |
+            set +x
+            : "${testerBitsrcSSHPrivateKey:?Configure testerBitsrcSSHPrivateKey in CircleCI project settings or a restricted context}"
+            umask 077
+            printf '%s\n' "$testerBitsrcSSHPrivateKey" > id_rsa
       - run: 'echo ${testerBitsrcSSHPrivateKey} >> id_rsa'
       - run: 'echo "-----END RSA PRIVATE KEY-----" >> id_rsa'
       - run: 'echo ${testerBitsrcSSHPublicKey} >> id_rsa.pub'
